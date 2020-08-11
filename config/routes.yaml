@@ -1,0 +1,9 @@
+index:
+    path: /
+    controller: App\Controller\indexController::index
+    methods: GET
+
+choose_trip:
+    path: /chooseNextTrip/{town1}&{town2}
+    controller: App\Controller\WeatherController::compareWeather
+    methods: GET|POST
