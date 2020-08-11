@@ -11,7 +11,7 @@ class locationController
 
     public function getLocation(string $town)
     {
-        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=".$town."&key=AIzaSyD75rtn3qutS05eg4nx_pvDHSyYzIzz-JY";
+        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=".$town."&key=";
         $session = curl_init($url);
         $content = null;
 
