@@ -4,45 +4,94 @@ namespace App\Controller;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-class locationController
+class LocationController
 {
-    public $location_x;
-    public $location_y;
+    public $latitude;
+    public $longitude;
+    public $temp_average = 0;
+    public $humidity_average = 0;
+    public $cloud_average = 0;
+    public $points = 0;
 
     public function getLocation(string $town)
     {
-        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=".$town."&key=";
-        $session = curl_init($url);
-        $content = null;
+        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=$town&key=APIKEY";
+        $json = file_get_contents($url);
+        $json = json_decode($json);
+        $this->latitude = $json->results[0]->geometry->location->lat;
+        $this->longitude = $json->results[0]->geometry->location->lng;
+    }
 
-        curl_setopt($session, CURLOPT_HEADER, 0);
-        $content = curl_exec($session);
-        if (curl_error($session)) {
-            $this->location_x = 0;
-            $this->location_y = 0;
-        } else {
-            /*
-            * TODO: fetch coord from JSON and return them
-            */
+    public function getWeather()
+    {
+        $count = 0;
+        $url = "https://api.openweathermap.org/data/2.5/onecall?lat=$this->latitude&lon=$this->longitude&units=metric&exclude=current,minutely,hourly&appid=APIKEY";
+        $json = file_get_contents($url);
+        $json = json_decode($json);
+        foreach ($json->daily as $day) {
+            $this->temp_average += $day->temp->max;
+            $this->humidity_average += $day->humidity;
+            $this->cloud_average += $day->clouds;
+            $count++;
         }
-        curl_close($session);
+        $this->temp_average /= $count;
+        $this->humidity_average /= $count;
+        $this->cloud_average /= $count;
     }
 }
 
 class WeatherController
 {
+    private function calculate_difference(int $val, int $ref)
+    {
+        $diff = $val - $ref;
+        if ($diff < 0)
+            $diff *= -1;
+        return ($diff);
+    }
+
+    private function addPoints(LocationController $location1, LocationController $location2)
+    {
+        $temp_diff1 = $this->calculate_difference($location1->temp_average, (int)27);
+        $temp_diff2 = $this->calculate_difference($location2->temp_average, (int)27);
+        $cloud_diff1 = $this->calculate_difference($location1->temp_average, (int)15);
+        $cloud_diff2 = $this->calculate_difference($location2->temp_average, (int)15);
+        $humidity_diff1 = $this->calculate_difference($location1->temp_average, (int)60);
+        $humidity_diff2 = $this->calculate_difference($location2->temp_average, (int)60);
+
+        if ($temp_diff1 <= $temp_diff2)
+            $location1->points += 20;
+        else
+            $location2->points += 20;
+        if ($humidity_diff1 <= $humidity_diff2)
+            $location1->points += 15;
+        else
+            $location2->points += 15;
+        if ($cloud_diff1 <= $cloud_diff2)
+            $location1->points += 20;
+        else
+            $location2->points += 20;
+    }
+
     public function compareWeather(string $town1, string $town2)
     {
-        $location1 = new locationController;
-        $location2 = new locationController;
+        $location1 = new LocationController;
+        $location2 = new LocationController;
 
         $location1->getLocation($town1);
         $location2->getLocation($town2);
-        /*
-        * TODO: API call with coords, extract weather data from JSON, sort town by weather
-        */
-        return new Response(
-            '<html><body>Lucky number: coucou'.$town1.$town2.'</body></html>'
-        );
+        $location1->getWeather();
+        $location2->getWeather();
+        $this->addPoints($location1, $location2);
+        if ($location1->points > $location2->points) {
+            return new Response(
+                '<html><body>Location '.$town1.' will have a nicer weather than '.$town2.' next week</body></html>'
+            );
+        }
+        if ($location1->points <= $location2->points) {
+            return new Response(
+                '<html><body>Location '.$town2.' will have a nicer weather than '.$town1.' next week</body></html>'
+            );
+        }
     }
 }
