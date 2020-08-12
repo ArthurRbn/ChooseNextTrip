@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Controller;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
@@ -8,6 +9,8 @@ class LocationController
 {
     public $latitude;
     public $longitude;
+    public $json;
+    public $city_name;
     public $temp_average = 0;
     public $humidity_average = 0;
     public $cloud_average = 0;
@@ -15,20 +18,21 @@ class LocationController
 
     public function getLocation(string $town)
     {
-        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=$town&key=APIKEY";
+        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=$town&key=API_KEY";
         $json = file_get_contents($url);
-        $json = json_decode($json);
-        $this->latitude = $json->results[0]->geometry->location->lat;
-        $this->longitude = $json->results[0]->geometry->location->lng;
+        $decoded_json = json_decode($json);
+        $this->latitude = $decoded_json->results[0]->geometry->location->lat;
+        $this->longitude = $decoded_json->results[0]->geometry->location->lng;
+        $this->city_name = $town;
     }
 
     public function getWeather()
     {
         $count = 0;
-        $url = "https://api.openweathermap.org/data/2.5/onecall?lat=$this->latitude&lon=$this->longitude&units=metric&exclude=current,minutely,hourly&appid=APIKEY";
+        $url = "https://api.openweathermap.org/data/2.5/onecall?lat=$this->latitude&lon=$this->longitude&units=metric&exclude=current,minutely,hourly&appid=API_KEY";
         $json = file_get_contents($url);
-        $json = json_decode($json);
-        foreach ($json->daily as $day) {
+        $decoded_json = json_decode($json);
+        foreach ($decoded_json->daily as $day) {
             $this->temp_average += $day->temp->max;
             $this->humidity_average += $day->humidity;
             $this->cloud_average += $day->clouds;
@@ -37,6 +41,9 @@ class LocationController
         $this->temp_average /= $count;
         $this->humidity_average /= $count;
         $this->cloud_average /= $count;
+        $decoded_json = json_decode($json, true);
+        $decoded_json['City'] = $this->city_name;
+        $this->json = json_encode($decoded_json);
     }
 }
 
@@ -73,8 +80,10 @@ class WeatherController
             $location2->points += 20;
     }
 
-    public function compareWeather(string $town1, string $town2)
+    public function compareWeather(Request $request)
     {
+        $town1 = $request->request->get('town1');
+        $town2 = $request->request->get('town2');
         $location1 = new LocationController;
         $location2 = new LocationController;
 
@@ -84,14 +93,11 @@ class WeatherController
         $location2->getWeather();
         $this->addPoints($location1, $location2);
         if ($location1->points > $location2->points) {
-            return new Response(
-                '<html><body>Location '.$town1.' will have a nicer weather than '.$town2.' next week</body></html>'
-            );
+            $response = new Response($location1->json);
+        } else if ($location1->points <= $location2->points) {
+            $response = new Response($location2->json);
         }
-        if ($location1->points <= $location2->points) {
-            return new Response(
-                '<html><body>Location '.$town2.' will have a nicer weather than '.$town1.' next week</body></html>'
-            );
-        }
+        $response->headers->set('Content-Type', 'application/json');
+        return $response;
     }
 }
