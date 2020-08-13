@@ -18,7 +18,7 @@ class LocationController
 
     public function getLocation(string $town)                                   /* Transform town name into geographic coordinates */
     {
-        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=$town&key=API_KEY";   /* Query string to Google geocode API */
+        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=$town&key=AIzaSyD75rtn3qutS05eg4nx_pvDHSyYzIzz-JY";   /* Query string to Google geocode API */
         $json = file_get_contents($url);
         $decoded_json = json_decode($json);
         $this->latitude = $decoded_json->results[0]->geometry->location->lat;
@@ -29,7 +29,7 @@ class LocationController
     public function getWeather()
     {
         $count = 0;
-        $url = "https://api.openweathermap.org/data/2.5/onecall?lat=$this->latitude&lon=$this->longitude&units=metric&exclude=current,minutely,hourly&appid=API_KEY"; /* Query string to OpenWeatherMap OneCall API */
+        $url = "https://api.openweathermap.org/data/2.5/onecall?lat=$this->latitude&lon=$this->longitude&units=metric&exclude=current,minutely,hourly&appid=c46b70ec69fe3c234bfbc16191aad890"; /* Query string to OpenWeatherMap OneCall API */
         $json = file_get_contents($url);
         $decoded_json = json_decode($json);
         foreach ($decoded_json->daily as $day) {                                /* Get the temperature, humidity and cloud average for the next week */
@@ -61,10 +61,10 @@ class WeatherController
     {
         $temp_diff1 = $this->calculate_difference($location1->temp_average, (int)27);
         $temp_diff2 = $this->calculate_difference($location2->temp_average, (int)27);
-        $cloud_diff1 = $this->calculate_difference($location1->temp_average, (int)15);
-        $cloud_diff2 = $this->calculate_difference($location2->temp_average, (int)15);
-        $humidity_diff1 = $this->calculate_difference($location1->temp_average, (int)60);
-        $humidity_diff2 = $this->calculate_difference($location2->temp_average, (int)60);
+        $cloud_diff1 = $this->calculate_difference($location1->cloud_average, (int)15);
+        $cloud_diff2 = $this->calculate_difference($location2->cloud_average, (int)15);
+        $humidity_diff1 = $this->calculate_difference($location1->humidity_average, (int)60);
+        $humidity_diff2 = $this->calculate_difference($location2->humidity_average, (int)60);
 
         if ($temp_diff1 <= $temp_diff2)                                         /* add points for temperature */
             $location1->points += 20;
@@ -75,9 +75,9 @@ class WeatherController
         else
             $location2->points += 15;
         if ($cloud_diff1 <= $cloud_diff2)                                       /* add points for cloud percentage */
-            $location1->points += 20;
+            $location1->points += 10;
         else
-            $location2->points += 20;
+            $location2->points += 10;
     }
 
     public function compareWeather(Request $request)
