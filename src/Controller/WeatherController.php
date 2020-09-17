@@ -20,7 +20,7 @@ class LocationController
 
     public function getLocation(string $town)                                   /* Transform town name into geographic coordinates */
     {
-        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=$town&key=AIzaSyD75rtn3qutS05eg4nx_pvDHSyYzIzz-JY";   /* Query string to Google geocode API */
+        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=$town&key=API_KEY";   /* Query string to Google geocode API */
         $json = file_get_contents($url);
         $decoded_json = json_decode($json);
         $this->latitude = $decoded_json->results[0]->geometry->location->lat;
@@ -31,7 +31,7 @@ class LocationController
     public function getWeather()
     {
         $count = 0;
-        $url = "https://api.openweathermap.org/data/2.5/onecall?lat=$this->latitude&lon=$this->longitude&units=metric&exclude=current,minutely,hourly&appid=c46b70ec69fe3c234bfbc16191aad890"; /* Query string to OpenWeatherMap OneCall API */
+        $url = "https://api.openweathermap.org/data/2.5/onecall?lat=$this->latitude&lon=$this->longitude&units=metric&exclude=current,minutely,hourly&appid=API_KEY"; /* Query string to OpenWeatherMap OneCall API */
         $json = file_get_contents($url);
         $decoded_json = json_decode($json);
         foreach ($decoded_json->daily as $day) {                                /* Get the temperature, humidity and cloud average for the next week */
