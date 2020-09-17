@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Controller;
+use PhpParser\Node\Expr\Array_;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -18,7 +20,7 @@ class LocationController
 
     public function getLocation(string $town)                                   /* Transform town name into geographic coordinates */
     {
-        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=$town&key=API_KEY";   /* Query string to Google geocode API */
+        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=$town&key=AIzaSyD75rtn3qutS05eg4nx_pvDHSyYzIzz-JY";   /* Query string to Google geocode API */
         $json = file_get_contents($url);
         $decoded_json = json_decode($json);
         $this->latitude = $decoded_json->results[0]->geometry->location->lat;
@@ -29,7 +31,7 @@ class LocationController
     public function getWeather()
     {
         $count = 0;
-        $url = "https://api.openweathermap.org/data/2.5/onecall?lat=$this->latitude&lon=$this->longitude&units=metric&exclude=current,minutely,hourly&appid=API_KEY"; /* Query string to OpenWeatherMap OneCall API */
+        $url = "https://api.openweathermap.org/data/2.5/onecall?lat=$this->latitude&lon=$this->longitude&units=metric&exclude=current,minutely,hourly&appid=c46b70ec69fe3c234bfbc16191aad890"; /* Query string to OpenWeatherMap OneCall API */
         $json = file_get_contents($url);
         $decoded_json = json_decode($json);
         foreach ($decoded_json->daily as $day) {                                /* Get the temperature, humidity and cloud average for the next week */
@@ -43,12 +45,34 @@ class LocationController
         $this->cloud_average /= $count;
         $decoded_json = json_decode($json, true);
         $decoded_json['City'] = $this->city_name;                               /* Add city name to the weather informations */
-        $this->json = json_encode($decoded_json);
+        $this->json = $decoded_json;
     }
 }
 
-class WeatherController
+class WeatherController extends AbstractController
 {
+    private function build_return_json(LocationController $best, LocationController $worst)
+    {
+        $return_json = array(
+            'Winner'=>$best->city_name,
+            'Cities'=>array(
+                array(
+                    'city_name'=>$best->city_name,
+                    'temp_average'=>$best->temp_average,
+                    'cloud_average'=>$best->cloud_average,
+                    'humidity_average'=>$best->humidity_average
+                ),
+                array(
+                    'city_name'=>$worst->city_name,
+                    'temp_average'=>$worst->temp_average,
+                    'cloud_average'=>$worst->cloud_average,
+                    'humidity_average'=>$worst->humidity_average
+                ),
+            ),
+        );
+        return json_encode($return_json, true);
+    }
+
     private function calculate_difference(int $val, int $ref)                   /* calculate the difference between a value and a reference */
     {                                                                           /* and make sure the offset is positive so it can be compared */
         $diff = $val - $ref;
@@ -82,22 +106,29 @@ class WeatherController
 
     public function compareWeather(Request $request)
     {
-        $town1 = $request->request->get('town1');
-        $town2 = $request->request->get('town2');
-        $location1 = new LocationController;
-        $location2 = new LocationController;
-
-        $location1->getLocation($town1);
-        $location2->getLocation($town2);
-        $location1->getWeather();
-        $location2->getWeather();
-        $this->addPoints($location1, $location2);
-        if ($location1->points > $location2->points) {                          /* build response with the best city's weather JSON */
-            $response = new Response($location1->json);
-        } else if ($location1->points <= $location2->points) {
-            $response = new Response($location2->json);
+        if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+            return $this->render('base.html.twig', []);
         }
-        $response->headers->set('Content-Type', 'application/json');            /* set header content-type field value */
-        return $response;
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $town1 = $request->request->get('town1');
+            $town2 = $request->request->get('town2');
+            $location1 = new LocationController;
+            $location2 = new LocationController;
+
+            $location1->getLocation($town1);
+            $location2->getLocation($town2);
+            $location1->getWeather();
+            $location2->getWeather();
+            $this->addPoints($location1, $location2);
+            if ($location1->points > $location2->points) {                          /* build response with the best city's weather JSON */
+                $response_json = $this->build_return_json($location1, $location2);
+            } else if ($location1->points <= $location2->points) {
+                $response_json = $this->build_return_json($location2, $location1);
+            }
+            $response = new Response($response_json);
+            $response->headers->set('Content-Type', 'application/json');            /* set header content-type field value */
+            return $response;
+        }
+
     }
 }

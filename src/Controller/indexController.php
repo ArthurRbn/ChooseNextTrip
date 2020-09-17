@@ -1,14 +1,18 @@
 <?php
     namespace App\Controller;
+    use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
     use Symfony\Component\HttpFoundation\Response;
     use Symfony\Component\Routing\Annotation\Route;
 
-    class indexController
+    class indexController extends AbstractController
     {
         public function index()
         {
-            return new Response(
-                '<html><body></body></html>'
-            );
+            $words = ['sky', 'cloud', 'wood', 'rock', 'forest',
+                'mountain', 'breeze'];
+
+            return $this->render('base.html.twig', [
+                'words' => $words
+            ]);
         }
     }

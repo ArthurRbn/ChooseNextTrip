@@ -1,0 +1,23 @@
+body {
+    background-color: lightgray;
+}
+
+div {
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+}
+
+h1 {
+    margin: auto;
+}
+
+.Results {
+    display: flex;
+    flex-direction: row;
+    margin: auto;
+}
+
+.Results div {
+    padding: 20px;
+}
