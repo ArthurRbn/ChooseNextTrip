@@ -22,10 +22,18 @@ class LocationController
     {
         $url = "https://maps.googleapis.com/maps/api/geocode/json?address=$town&key=API_KEY";   /* Query string to Google geocode API */
         $json = file_get_contents($url);
+        $status_line = $http_response_header[0];
+        if (strpos($status_line, "OK") == false) {
+            return "Error";
+        }
         $decoded_json = json_decode($json);
+        if (empty($decoded_json->results)) {
+            return "Error";
+        }
         $this->latitude = $decoded_json->results[0]->geometry->location->lat;
         $this->longitude = $decoded_json->results[0]->geometry->location->lng;
         $this->city_name = $town;                                               /* store town name with coordinates */
+        return "OK";
     }
 
     public function getWeather()
@@ -54,6 +62,7 @@ class WeatherController extends AbstractController
     private function build_return_json(LocationController $best, LocationController $worst)
     {
         $return_json = array(
+            'Status'=>'OK',
             'Winner'=>$best->city_name,
             'Cities'=>array(
                 array(
@@ -115,8 +124,11 @@ class WeatherController extends AbstractController
             $location1 = new LocationController;
             $location2 = new LocationController;
 
-            $location1->getLocation($town1);
-            $location2->getLocation($town2);
+            if ($location1->getLocation($town1) != "OK" || $location2->getLocation($town2) != "OK") {
+                $error = new Response('{"Status": "Error"}');
+                $error->headers->set('Content-Type', 'application/json');
+                return $error;
+            }
             $location1->getWeather();
             $location2->getWeather();
             $this->addPoints($location1, $location2);
@@ -129,6 +141,5 @@ class WeatherController extends AbstractController
             $response->headers->set('Content-Type', 'application/json');            /* set header content-type field value */
             return $response;
         }
-
     }
 }

@@ -8,11 +8,6 @@
     {
         public function index()
         {
-            $words = ['sky', 'cloud', 'wood', 'rock', 'forest',
-                'mountain', 'breeze'];
-
-            return $this->render('base.html.twig', [
-                'words' => $words
-            ]);
+            return $this->render('base.html.twig');
         }
     }
