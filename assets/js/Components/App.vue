@@ -22,7 +22,7 @@
         <div class="Results-City">
           <div v-for="city in response_json.Cities">
             <p><strong>City:</strong> {{ city.city_name }}</p>
-            <p><strong>Temperature average:</strong> {{ city.temp_average }}%</p>
+            <p><strong>Temperature average:</strong> {{ city.temp_average }}°c</p>
             <p><strong>Cloud average:</strong> {{ city.cloud_average }}%</p>
             <p><strong>Humidity average:</strong> {{ city.humidity_average }}%</p>
           </div>
