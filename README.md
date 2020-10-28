@@ -3,7 +3,7 @@ A little headless Symfony web app which can compare two citie's weather conditio
 
 # How to use it:
 First [install symfony](https://symfony.com/doc/4.2/setup.html#installing-symfony) and get API keys for the [Google Geocode API](https://developers.google.com/maps/documentation/geocoding/start) and for the [OpenWeatherMap OneCall API](https://openweathermap.org/api/one-call-api?gclid=EAIaIQobChMIoOXN1Mqa6wIVBZ3VCh0GYwtDEAAYASAAEgJfP_D_BwE).
-Then, clone the repository and run the following command: `$cd ChooseNextTrip && symfony composer install`
+Then, clone the repository and run the following command: `$cd ChooseNextTrip && composer install`
 
 In /src/Controller/WeatherController.php add your API keys on line 21 and 32.
 
