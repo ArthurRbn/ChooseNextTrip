@@ -1,5 +1,5 @@
 # ChooseNextTrip
-A little headless Symfony web app which can compare two citie's weather conditions.
+A lightweigth Symfony web app which can compare two citie's weather conditions.
 
 # How to use it:
 First [install symfony](https://symfony.com/doc/4.2/setup.html#installing-symfony) and get API keys for the [Google Geocode API](https://developers.google.com/maps/documentation/geocoding/start) and for the [OpenWeatherMap OneCall API](https://openweathermap.org/api/one-call-api?gclid=EAIaIQobChMIoOXN1Mqa6wIVBZ3VCh0GYwtDEAAYASAAEgJfP_D_BwE).
